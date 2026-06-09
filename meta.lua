@@ -1,0 +1,23 @@
+---@class LPegPattern
+---@operator mul(LPegPattern|string|number): LPegPattern  -- p1 * p2 (Dizi / Sequence)
+---@operator add(LPegPattern|string|number): LPegPattern  -- p1 + p2 (Seçim / Ordered Choice)
+---@operator sub(LPegPattern|string|number): LPegPattern  -- p1 - p2 (Fark / Difference)
+---@operator pow(integer): LPegPattern                    -- p ^ n  (Döngü / Repetition)
+---@operator div(function|table|string): LPegPattern      -- p / f  (Capture transform)
+---@operator unm: LPegPattern                             -- -p     (Not Lookahead)
+---@operator len: LPegPattern                             -- #p     (And Lookahead)
+---@field match fun(self: LPegPattern, input: string, init?: integer): integer|any
+
+---@class Lpeg
+---@field P fun(value: string|integer|boolean|table|function|LPegPattern): LPegPattern
+---@field R fun(...: string): LPegPattern
+---@field S fun(list: string): LPegPattern
+---@field B fun(n: integer): LPegPattern
+---@field C fun(pattern: LPegPattern): LPegPattern
+---@field Cp fun(): LPegPattern
+---@field Cc fun(value: any): LPegPattern
+---@field Ct fun(pattern: LPegPattern): LPegPattern
+---@field Cf fun(pattern: LPegPattern, func: function): LPegPattern
+---@field V fun(name: string): LPegPattern
+---@alias Buffer string|Buffer[]
+---@type Lpeg
