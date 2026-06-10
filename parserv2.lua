@@ -31,7 +31,7 @@ G.TextMode = V("TextMode")
 G.LuaCode = V("LuaCode")
 G.Text = V("Text")
 local reservedkw = P("if") + P("for") + P("while") + P("else") + P("elseif") + P("end")
-local stopConditions =  P("</@>") + P("<@") +P("@") + P("}") + P("$(")
+local stopConditions =  P("</@>") + P("<@") +P("@") + P("}") + P("$(") + P("${")
 
 G.Text = C((P("{") * G.Text * P("}") + P(1) - stopConditions)^1) / function (text)
     return string.format("buffer[#buffer + 1] = %q\n", string.gsub(text, "%s+", " "))
@@ -104,11 +104,11 @@ G.TExpr = P("@")*C(G.BalancedParen) /function (expr)
 end
 
 G.FunCall = P("@") * -reservedkw * C(identifier * (P(".") *identifier)^0 * G.BalancedParen)/function (fun)
-    return string.format("buffer[#buffer + 1] = tostring(%s)", fun)
+    return string.format("buffer[#buffer + 1] = tostring(%s)\n", fun)
 end
 
 G.Identifier = P("@") * -reservedkw * C(identifier * (P(".") *identifier)^0)/function (identifier)
-    return string.format("buffer[#buffer + 1] = tostring(%s)",identifier)
+    return string.format("buffer[#buffer + 1] = tostring(%s)\n",identifier)
 end
 G.Patch = P("$") *C(G.BalancedParen)/function (expr)
     return string.format(
@@ -118,10 +118,27 @@ G.Patch = P("$") *C(G.BalancedParen)/function (expr)
     _patch = function() buffer[idx] =%s _old_patch() end
     ]],expr)
 end
+
+G.PatchText = P("${") * G.TextMode * P("}") /function (textGen)
+    return {[[
+        local idx = #buffer +1
+        buffer[idx]= ""
+        local _old_patch = _patch
+        _patch = function()
+            local ogBuffer = buffer
+            local buffer = {}
+            ]]
+            ,textGen,[[
+            ogBuffer[idx]= table.concat(buffer)
+            _old_patch()
+        end
+    ]]}
+end
+
 G.ToLua = P("@{") * G.LuaMode^-1 * P("}")
 G.ToText = P("@{") * G.TextMode^-1 * P("}")
 local atEscape = P("\\@") * Cc("@")
-G.TextMode = Ct((atEscape + G.Patch + G.FunCall+ G.TExpr + G.For + G.While + G.If + G.Component +G.ToLua + G.Identifier+ G.Text)^1)/function (generators)
+G.TextMode = Ct((atEscape + G.PatchText + G.Patch + G.FunCall+ G.TExpr + G.For + G.While + G.If + G.Component +G.ToLua + G.Identifier+ G.Text)^1)/function (generators)
     return {"do\n", generators, "end\n"}
 end
 G.LuaMode = Ct((G.ToText+(G.LuaCode* Cc("\n")))^1)
@@ -179,8 +196,8 @@ function Flatten(tbl,buffer)
     end
 end
 
-print(Flatten(
-    CompileComponent([[
+print(
+    GenerateCode([[
         @{
             local function H(slot, attr, _)
                 if attr.bebold then
@@ -192,16 +209,19 @@ print(Flatten(
             local function add(a,b)
                 return a + b
             end
-            local lib = {add=add, baba="isyou"}
+            
+            local startTime = os.clock()
         }
+        
+        code started in @startTime and ended in $(os.clock()) its $((os.clock()- startTime)*1000) ms to you my friend
         <@H priority={1}> etto ne</@>
         <@H bebold/>
         @if false then
-        heya world
+        heya world 
         @else
-        2 + 3 is @lib.add(add(1, 1), 3) just like @( 2 + 3 ) belki tanimi degisir $( 2 + 3 )
+        2 + 3 is @( 2 + 3 ) just like @add(3,4) and if math doesnt change in close time as well ass $( 2 + 3 ) 
         @end
-    ]])(noop, {}, {})
-))
+    ]])
+)
 
 ---@alias Component fun(slot:Component, attr:table, ctx:table):nil
