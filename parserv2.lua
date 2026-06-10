@@ -144,40 +144,7 @@ end
 G.LuaMode = Ct((G.ToText+(G.LuaCode* Cc("\n")))^1)
 G[1] = "TextMode"
 local grammar = P(G)
-
-function GenerateCode(code)
-    local code = {
-        [[local function noop(_,_,_) end
-        
-        return function(slot, attr, ctx)
-            
-            local _patch = function() end
-            local _ENV = setmetatable(ctx, {__index=_G})
-            ctx.buffer = ctx.buffer or {}
-            local buffer = ctx.buffer
-        ]]
-        ,P(G):match(code),[[
-        _patch()
-        return buffer
-    end]]
-    }
-    local code = Flatten(code)
-    return code
-end
-
----@param code string
----@return Component
-function CompileComponent(code)
-    local code = GenerateCode(code)
-    local mod,err = load(code,"template","t",_G)
-    if err or not mod then
-        print(code)
-        error(err)
-    end
-
-    return mod()
-end
-function Flatten(tbl,buffer)
+local function Flatten(tbl,buffer)
     local isTop = buffer == nil
     buffer = buffer or {}
     for i = 1, #tbl do
@@ -195,33 +162,45 @@ function Flatten(tbl,buffer)
         return table.concat(buffer)
     end
 end
-
-print(
-    GenerateCode([[
-        @{
-            local function H(slot, attr, _)
-                if attr.bebold then
-                    @{fuck you}
-                else
-                    @{<h@attr.priority><@slot/></h@attr.priority>}
-                end
-            end
-            local function add(a,b)
-                return a + b
-            end
-            
-            local startTime = os.clock()
-        }
+local function GenerateCode(code)
+    local code = {
+        [[local function noop(_,_,_) end
         
-        code started in @startTime and ended in $(os.clock()) its $((os.clock()- startTime)*1000) ms to you my friend
-        <@H priority={1}> etto ne</@>
-        <@H bebold/>
-        @if false then
-        heya world 
-        @else
-        2 + 3 is @( 2 + 3 ) just like @add(3,4) and if math doesnt change in close time as well ass $( 2 + 3 ) 
-        @end
-    ]])
-)
+        return function(slot, attr, ctx)
+            
+            local _patch = function() end
+            local _ENV = setmetatable(ctx, {__index=_G})
+            ctx.buffer = ctx.buffer or {}
+            local buffer = ctx.buffer
+        ]]
+        ,grammar:match(code),[[
+        _patch()
+        return buffer
+    end]]
+    }
+    local code = Flatten(code)
+    return code
+end
+
+
+
+---@param code string
+---@return Component
+local function CompileComponent(code,global)
+    local code = GenerateCode(code)
+    local mod,err = load(code,"template","t",global)
+    if err or not mod then
+        print(code)
+        error(err)
+    end
+
+    return mod()
+end
 
 ---@alias Component fun(slot:Component, attr:table, ctx:table):nil
+
+
+return {
+    CompileComponent = CompileComponent,
+    GenerateCode = GenerateCode
+}
