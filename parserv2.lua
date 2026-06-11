@@ -164,9 +164,7 @@ local function Flatten(tbl,buffer)
 end
 local function GenerateCode(code)
     local code = {
-        [[local function noop(_,_,_) end
-        
-        return function(slot, attr, ctx)
+        [[function(slot, attr, ctx)
             local _patch = function() end
             ctx.buffer = ctx.buffer or {}
             local buffer = ctx.buffer
@@ -185,7 +183,7 @@ end
 ---@param code string
 ---@return Component
 local function CompileComponent(code,global,name)
-    local code = GenerateCode(code)
+    local code = [[function noop(_,_,_) end return]] .. GenerateCode(code)
     local mod,err = load(code,name or "template","t",global)
     if err or not mod then
         print(code)
