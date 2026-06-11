@@ -184,9 +184,9 @@ end
 
 ---@param code string
 ---@return Component
-local function CompileComponent(code,global)
+local function CompileComponent(code,global,name)
     local code = GenerateCode(code)
-    local mod,err = load(code,"template","t",global)
+    local mod,err = load(code,name or "template","t",global)
     if err or not mod then
         print(code)
         error(err)
