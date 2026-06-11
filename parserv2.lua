@@ -167,9 +167,7 @@ local function GenerateCode(code)
         [[local function noop(_,_,_) end
         
         return function(slot, attr, ctx)
-            
             local _patch = function() end
-            local _ENV = setmetatable(ctx, {__index=_G})
             ctx.buffer = ctx.buffer or {}
             local buffer = ctx.buffer
         ]]
