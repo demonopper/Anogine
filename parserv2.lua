@@ -186,6 +186,7 @@ local function TravelDirection(code, deferTable)
     for i = #deferTable, 1, -1 do
         code[#code+1] = deferTable[i]
     end
+    return code
 end
 
 local function GenerateCode(code)
