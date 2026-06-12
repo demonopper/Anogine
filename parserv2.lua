@@ -120,8 +120,8 @@ G.Patch = P("$") *C(G.BalancedParen)/function (expr)
     [[
     local %s = ctx.counter
     ctx.counter = ctx.counter + 1
-    buffer[idx]= ""
-    ]],uniqueName), {deferflag, string.format("do buffer[%s] = tostring(%s) end\n",uniqueName,expr)}
+    buffer[%s]= ""
+    ]],uniqueName,uniqueName), {deferflag, string.format("do buffer[%s] = tostring(%s) end\n",uniqueName,expr)}
 end
 
 G.PatchText = P("${") * G.TextMode * P("}") /function (textGen)
