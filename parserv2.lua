@@ -112,8 +112,9 @@ G.Identifier = P("@") * -reservedkw * C(identifier * (P(".") *identifier)^0)/fun
 end
 G.Patch = P("$") *C(G.BalancedParen)/function (expr)
     return string.format(
-    [[ctx.counter = ctx.counter + 1
+    [[
     local idx = ctx.counter
+    ctx.counter = ctx.counter + 1
     buffer[idx]= ""
     local _old_patch = _patch
     _patch = function() buffer[idx] =%s _old_patch() end
