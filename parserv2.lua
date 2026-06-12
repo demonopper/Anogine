@@ -112,16 +112,18 @@ G.Identifier = P("@") * -reservedkw * C(identifier * (P(".") *identifier)^0)/fun
 end
 
 local deferflag = "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+local startFlag = "------------------------------"
 local counter = 0
 G.Patch = P("$") *C(G.BalancedParen)/function (expr)
     local uniqueName = string.format("idx%d",counter)
     counter = counter + 1
     return string.format(
     [[
-    local %s = ctx.counter
+    %s = ctx.counter
     ctx.counter = ctx.counter + 1
     buffer[%s]= ""
-    ]],uniqueName,uniqueName), {deferflag, string.format("do buffer[%s] = tostring(%s) end\n",uniqueName,expr)}
+    ]],uniqueName,uniqueName), {deferflag, string.format("do buffer[%s] = tostring(%s) end\n",uniqueName,expr)}, 
+    {startFlag,string.format("local %s", uniqueName)}
 end
 
 G.PatchText = P("${") * G.TextMode * P("}") /function (textGen)
@@ -164,11 +166,13 @@ local function Flatten(tbl,buffer)
     end
 end
 
-local function TravelDirection(code, deferTable)
+local function TravelDirection(code, deferTable, startTable)
     local isRoot
     if not deferTable then
         isRoot = true
         deferTable = {}
+        startTable = {}
+        table.insert(code,1, startTable)
     end
     
     for i = 1, #code do
@@ -178,11 +182,16 @@ local function TravelDirection(code, deferTable)
                 code[i] = "" -- i dont want this to show in code
                 deferTable[#deferTable+1] = element[2]
                 element = element[2]
+            elseif #element == 2 and element[1] == startFlag then
+                code[i] = ""
+                startTable[#startTable+1] = element[2]
+                element = element[2]
             end
             TravelDirection(element, deferTable)
         end
     end
     if not isRoot then return end
+    
     for i = #deferTable, 1, -1 do
         code[#code+1] = deferTable[i]
     end
