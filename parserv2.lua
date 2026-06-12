@@ -163,24 +163,8 @@ local function Flatten(tbl,buffer)
         return table.concat(buffer)
     end
 end
-local function GenerateCode(code)
-    local code = {
-        [[function(slot, attr, ctx)
-            local _patch = function() end
-            ctx.buffer = ctx.buffer or {}
-            local buffer = ctx.buffer
-            ctx.counter = ctx.counter or 1
-        ]]
-        ,grammar:match(code),[[
-        _patch()
-        return buffer
-    end]]
-    }
-    local code = Flatten(code)
-    return code
-end
 
-function TravelDirection(code, deferTable)
+local function TravelDirection(code, deferTable)
     local isRoot
     if not deferTable then
         isRoot = true
@@ -203,6 +187,25 @@ function TravelDirection(code, deferTable)
         code[#code+1] = deferTable[i]
     end
 end
+
+local function GenerateCode(code)
+    local code = {
+        [[function(slot, attr, ctx)
+            local _patch = function() end
+            ctx.buffer = ctx.buffer or {}
+            local buffer = ctx.buffer
+            ctx.counter = ctx.counter or 1
+        ]]
+        ,TravelDirection(grammar:match(code)),[[
+        _patch()
+        return buffer
+    end]]
+    }
+    local code = Flatten(code)
+    return code
+end
+
+
 
 ---@param code string
 ---@return Component
