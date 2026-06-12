@@ -202,13 +202,11 @@ end
 local function GenerateCode(code)
     local code = {
         [[function(slot, attr, ctx)
-            local _patch = function() end
             ctx.buffer = ctx.buffer or {}
             local buffer = ctx.buffer
             ctx.counter = ctx.counter or 1
         ]]
         ,TravelDirection(grammar:match(code)),[[
-        _patch()
         return buffer
     end]]
     }
