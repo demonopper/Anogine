@@ -110,31 +110,30 @@ end
 G.Identifier = P("@") * -reservedkw * C(identifier * (P(".") *identifier)^0)/function (identifier)
     return string.format("buffer[ctx.counter] = tostring(%s)\nctx.counter = ctx.counter + 1\n",identifier)
 end
+
+local deferflag = "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+local counter = 0
 G.Patch = P("$") *C(G.BalancedParen)/function (expr)
+    local uniqueName = string.format("idx%d",counter)
+    counter = counter + 1
     return string.format(
     [[
-    local idx = ctx.counter
+    local %s = ctx.counter
     ctx.counter = ctx.counter + 1
     buffer[idx]= ""
-    local _old_patch = _patch
-    _patch = function() buffer[idx] = tostring(%s) _old_patch() end
-    ]],expr)
+    ]],uniqueName), {deferflag, string.format("do buffer[%s] = tostring(expr) end\n",uniqueName,expr)}
 end
 
 G.PatchText = P("${") * G.TextMode * P("}") /function (textGen)
-    return {[[ctx.counter = ctx.counter + 1
-        local idx = ctx.counter
-        buffer[idx]= ""
-        local _old_patch = _patch
-        _patch = function()
-            local ogBuffer = buffer
+    local uniqueName = string.format("idx%d",counter)
+    counter = counter + 1
+    return string.format([[ctx.counter = ctx.counter + 1
+        local %s = ctx.counter
+        buffer[%s]= ""
+    ]],uniqueName,uniqueName), {deferflag,{[[do local ogBuffer = buffer
             local buffer = {}
             ]]
-            ,textGen,[[
-            ogBuffer[idx]= table.concat(buffer)
-            _old_patch()
-        end
-    ]]}
+            ,textGen,string.format("ogBuffer[%s]= table.concat(buffer)end\n",uniqueName)}}
 end
 
 G.ToLua = P("@{") * G.LuaMode^-1 * P("}")
@@ -181,7 +180,29 @@ local function GenerateCode(code)
     return code
 end
 
-
+function TravelDirection(code, deferTable)
+    local isRoot
+    if not deferTable then
+        isRoot = true
+        deferTable = {}
+    end
+    
+    for i = 1, #code do
+        local element = code[i]
+        if type(element) == "table" then
+            if #element == 2 and element[1] == deferflag then
+                code[i] = "" -- i dont want this to show in code
+                deferTable[#deferTable+1] = element[2]
+                element = element[2]
+            end
+            TravelDirection(element, deferTable)
+        end
+    end
+    if not isRoot then return end
+    for i = #deferTable, 1, -1 do
+        code[#code+1] = deferTable[i]
+    end
+end
 
 ---@param code string
 ---@return Component
