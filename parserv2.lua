@@ -117,7 +117,7 @@ G.Patch = P("$") *C(G.BalancedParen)/function (expr)
     ctx.counter = ctx.counter + 1
     buffer[idx]= ""
     local _old_patch = _patch
-    _patch = function() buffer[idx] =%s _old_patch() end
+    _patch = function() buffer[idx] = tostring(%s) _old_patch() end
     ]],expr)
 end
 
