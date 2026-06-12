@@ -34,7 +34,7 @@ local reservedkw = P("if") + P("for") + P("while") + P("else") + P("elseif") + P
 local stopConditions =  P("</@>") + P("<@") +P("@") + P("}") + P("$(") + P("${")
 
 G.Text = C((P("{") * G.Text * P("}") + P(1) - stopConditions)^1) / function (text)
-    return string.format("buffer[#buffer + 1] = %q\n", string.gsub(text, "%s+", " "))
+    return string.format("buffer[ctx.counter] = %q\nctx.counter = ctx.counter + 1", string.gsub(text, "%s+", " "))
 end
 G.InnerLua = (P("{") * V("InnerLua") * P("}") + P(1) - S("}@"))^1
 
