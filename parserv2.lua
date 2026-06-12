@@ -100,19 +100,20 @@ end
 
 G.BalancedParen = P("(") * ( (P(1) - S("()")) + V("BalancedParen") )^0 * P(")")
 G.TExpr = P("@")*C(G.BalancedParen) /function (expr)
-    return string.format("buffer[#buffer + 1] = tostring(%s)", expr)
+    return string.format("buffer[ctx.counter] = tostring(%s)\nctx.counter = ctx.counter + 1\n", expr)
 end
 
 G.FunCall = P("@") * -reservedkw * C(identifier * (P(".") *identifier)^0 * G.BalancedParen)/function (fun)
-    return string.format("buffer[#buffer + 1] = tostring(%s)\n", fun)
+    return string.format("buffer[ctx.counter] = tostring(%s)\nctx.counter = ctx.counter + 1\n", fun)
 end
 
 G.Identifier = P("@") * -reservedkw * C(identifier * (P(".") *identifier)^0)/function (identifier)
-    return string.format("buffer[#buffer + 1] = tostring(%s)\n",identifier)
+    return string.format("buffer[ctx.counter] = tostring(%s)\nctx.counter = ctx.counter + 1\n",identifier)
 end
 G.Patch = P("$") *C(G.BalancedParen)/function (expr)
     return string.format(
-    [[local idx = #buffer +1
+    [[ctx.counter = ctx.counter + 1
+    local idx = ctx.counter
     buffer[idx]= ""
     local _old_patch = _patch
     _patch = function() buffer[idx] =%s _old_patch() end
@@ -120,8 +121,8 @@ G.Patch = P("$") *C(G.BalancedParen)/function (expr)
 end
 
 G.PatchText = P("${") * G.TextMode * P("}") /function (textGen)
-    return {[[
-        local idx = #buffer +1
+    return {[[ctx.counter = ctx.counter + 1
+        local idx = ctx.counter
         buffer[idx]= ""
         local _old_patch = _patch
         _patch = function()
@@ -168,6 +169,7 @@ local function GenerateCode(code)
             local _patch = function() end
             ctx.buffer = ctx.buffer or {}
             local buffer = ctx.buffer
+            ctx.counter = ctx.counter or 1
         ]]
         ,grammar:match(code),[[
         _patch()
