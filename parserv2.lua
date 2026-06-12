@@ -123,19 +123,20 @@ G.Patch = P("$") *C(G.BalancedParen)/function (expr)
     ctx.counter = ctx.counter + 1
     buffer[%s]= ""
     ]],uniqueName,uniqueName), {deferflag, string.format("do buffer[%s] = tostring(%s) end\n",uniqueName,expr)}, 
-    {startFlag,string.format("local %s", uniqueName)}
+    {startFlag,string.format("local %s\n", uniqueName)}
 end
 
 G.PatchText = P("${") * G.TextMode * P("}") /function (textGen)
     local uniqueName = string.format("idx%d",counter)
     counter = counter + 1
     return string.format([[ctx.counter = ctx.counter + 1
-        local %s = ctx.counter
+        %s = ctx.counter
         buffer[%s]= ""
     ]],uniqueName,uniqueName), {deferflag,{[[do local ogBuffer = buffer
             local buffer = {}
             ]]
-            ,textGen,string.format("ogBuffer[%s]= table.concat(buffer)end\n",uniqueName)}}
+            ,textGen,string.format("ogBuffer[%s]= table.concat(buffer)end\n",uniqueName)}}, 
+    {startFlag,string.format("local %s\n", uniqueName)}
 end
 
 G.ToLua = P("@{") * G.LuaMode^-1 * P("}")
