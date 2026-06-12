@@ -187,7 +187,7 @@ local function TravelDirection(code, deferTable, startTable)
                 startTable[#startTable+1] = element[2]
                 element = element[2]
             end
-            TravelDirection(element, deferTable)
+            TravelDirection(element, deferTable,startTable)
         end
     end
     if not isRoot then return end
