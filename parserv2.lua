@@ -132,10 +132,13 @@ G.PatchText = P("${") * G.TextMode * P("}") /function (textGen)
     return string.format([[ctx.counter = ctx.counter + 1
         %s = ctx.counter
         buffer[%s]= ""
-    ]],uniqueName,uniqueName), {deferflag,{[[do local ogBuffer = buffer
+    ]],uniqueName,uniqueName), {deferflag,{[[do 
+            local ogCount = ctx.counter
+            local ogBuffer = buffer
+            ctx.counter = 1
             local buffer = {}
             ]]
-            ,textGen,string.format("ogBuffer[%s]= table.concat(buffer)end\n",uniqueName)}}, 
+            ,textGen,string.format("ogBuffer[%s]= table.concat(buffer)end\nctx.counter=ogCount",uniqueName)}}, 
     {startFlag,string.format("local %s\n", uniqueName)}
 end
 
