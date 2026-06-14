@@ -1,0 +1,1 @@
+* do lambda lifting to prevent nyi on luajit
